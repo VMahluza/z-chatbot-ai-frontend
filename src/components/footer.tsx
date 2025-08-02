@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 export function Footer() {
   return (
     <footer className="border-t bg-background">
-      <div className="container py-8 md:py-12">
+      <div className="container mx-auto py-8 md:py-12 px-4 md:px-6 max-w-6xl">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           {/* Brand */}
           <div className="space-y-3">

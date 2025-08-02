@@ -6,7 +6,7 @@ import { Book, Code, MessageSquare, Settings } from "lucide-react";
 export default function DocsPage() {
   return (
     <MainLayout>
-      <div className="container mx-auto py-8">
+      <div className="container mx-auto py-8 px-4 md:px-6 max-w-6xl">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
             <h1 className="text-4xl font-bold mb-4">Documentation</h1>
