@@ -53,7 +53,7 @@ export function ChatMessages({ messages, isLoading, className }: ChatMessagesPro
 
   const welcomeMessage: ChatMessageType = {
     type: 'bot',
-    content: "Hello! I'm your AI assistant. How can I help you today?",
+    content: "🥹 Hello! welcome to Z-Chatbot AI Assistant. I'm here to help you with your questions and tasks. Feel free to ask me anything!",
     timestamp: new Date()
   };
 
