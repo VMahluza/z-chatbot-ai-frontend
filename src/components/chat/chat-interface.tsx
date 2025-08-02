@@ -28,6 +28,7 @@ export function ChatInterface({
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [chatService] = useState(() => new ChatService(wsUrl));
+  const [hasShownInitialConnection, setHasShownInitialConnection] = useState(false);
   const { toast } = useToast();
 
   // Handle new messages
@@ -56,19 +57,27 @@ export function ChatInterface({
   // Handle connection changes
   const handleConnectionChange = useCallback((connected: boolean) => {
     setIsConnected(connected);
+    
     if (connected) {
-      toast({
-        title: "Connected",
-        description: "Successfully connected to chat server",
-      });
+      setHasShownInitialConnection(true);
+      // Only show success toast after the initial connection or reconnection
+      if (hasShownInitialConnection) {
+        toast({
+          title: "Reconnected",
+          description: "Successfully reconnected to chat server",
+        });
+      }
     } else {
-      toast({
-        title: "Disconnected",
-        description: "Lost connection to chat server",
-        variant: "destructive",
-      });
+      // Only show disconnection toast if we were previously connected
+      if (hasShownInitialConnection) {
+        toast({
+          title: "Disconnected",
+          description: "Lost connection to chat server. Attempting to reconnect...",
+          variant: "destructive",
+        });
+      }
     }
-  }, [toast]);
+  }, [toast, hasShownInitialConnection]);
 
   // Initialize chat service
   useEffect(() => {
@@ -76,14 +85,29 @@ export function ChatInterface({
     const unsubscribeConnection = chatService.onConnectionChange(handleConnectionChange);
 
     if (autoConnect && !chatService.isConnected()) {
-      chatService.connect().catch((error) => {
-        console.error("Failed to connect:", error);
-        toast({
-          title: "Connection Failed",
-          description: "Failed to connect to chat server. Auto-reconnection will be attempted.",
-          variant: "destructive",
-        });
-      });
+      // Add a small delay to ensure component is fully mounted
+      const timeoutId = setTimeout(async () => {
+        try {
+          await chatService.connect();
+        } catch (error) {
+          console.error("Failed to connect:", error);
+          // Only show toast if the error is not a simple connection timeout
+          if (error instanceof Error && !error.message.includes('timeout')) {
+            toast({
+              title: "Connection Failed",
+              description: "Failed to connect to chat server. Auto-reconnection will be attempted.",
+              variant: "destructive",
+            });
+          }
+        }
+      }, 500); // 500ms delay
+
+      return () => {
+        clearTimeout(timeoutId);
+        unsubscribeMessage();
+        unsubscribeConnection();
+        chatService.disconnect();
+      };
     }
 
     return () => {

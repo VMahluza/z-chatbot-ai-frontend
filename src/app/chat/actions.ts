@@ -21,10 +21,39 @@ export class ChatService {
 
   connect(): Promise<void> {
     return new Promise((resolve, reject) => {
+      // If already connected, resolve immediately
+      if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+        resolve();
+        return;
+      }
+
+      // If already connecting, wait for the current connection attempt
+      if (this.socket && this.socket.readyState === WebSocket.CONNECTING) {
+        const checkConnection = () => {
+          if (this.socket?.readyState === WebSocket.OPEN) {
+            resolve();
+          } else if (this.socket?.readyState === WebSocket.CLOSED) {
+            reject(new Error('Connection failed'));
+          } else {
+            setTimeout(checkConnection, 100);
+          }
+        };
+        checkConnection();
+        return;
+      }
+
       try {
         this.socket = new WebSocket(this.wsUrl);
 
+        const connectionTimeout = setTimeout(() => {
+          if (this.socket && this.socket.readyState !== WebSocket.OPEN) {
+            this.socket.close();
+            reject(new Error('Connection timeout'));
+          }
+        }, 5000); // 5 second timeout
+
         this.socket.onopen = () => {
+          clearTimeout(connectionTimeout);
           console.log('WebSocket connected');
           this.reconnectAttempts = 0; // Reset on successful connection
           this.notifyConnectionHandlers(true);
@@ -54,6 +83,7 @@ export class ChatService {
         };
 
         this.socket.onclose = (event) => {
+          clearTimeout(connectionTimeout);
           console.log('WebSocket disconnected:', event.code, event.reason);
           this.notifyConnectionHandlers(false);
           
@@ -64,6 +94,7 @@ export class ChatService {
         };
 
         this.socket.onerror = (error) => {
+          clearTimeout(connectionTimeout);
           console.error('WebSocket error:', error);
           this.notifyConnectionHandlers(false);
           reject(error);
