@@ -18,13 +18,38 @@ export function ChatMessages({ messages, isLoading, className }: ChatMessagesPro
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
+    const scrollToBottom = () => {
+      if (scrollAreaRef.current) {
+        const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+        if (scrollElement) {
+          scrollElement.scrollTop = scrollElement.scrollHeight;
+        }
+      }
+      
+      // Fallback to scrollIntoView if the above doesn't work
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'end'
+        });
+      }
+    };
+
+    // Use setTimeout to ensure DOM is updated
+    const timeoutId = setTimeout(scrollToBottom, 100);
+    
+    return () => clearTimeout(timeoutId);
+  }, [messages, isLoading]);
+
+  // Additional effect to handle immediate scrolling for rapid message updates
+  useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ 
-        behavior: 'smooth',
+        behavior: 'auto', // Use 'auto' for immediate scroll on rapid updates
         block: 'end'
       });
     }
-  }, [messages]);
+  }, [messages.length]);
 
   const welcomeMessage: ChatMessageType = {
     type: 'bot',
@@ -37,7 +62,7 @@ export function ChatMessages({ messages, isLoading, className }: ChatMessagesPro
   return (
     <ScrollArea 
       ref={scrollAreaRef}
-      className={cn("flex-1 p-6 bg-muted/20", className)}
+      className={cn("flex-1 min-h-0 p-6 bg-muted/20", className)}
     >
       <div className="space-y-6">
         {displayMessages.map((message, index) => (

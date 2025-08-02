@@ -32,8 +32,25 @@ export function ChatInterface({
 
   // Handle new messages
   const handleNewMessage = useCallback((message: ChatMessage) => {
-    setMessages(prev => [...prev, message]);
-    setIsLoading(false);
+    setMessages(prev => {
+      // Avoid duplicate messages by checking if the message already exists
+      const isDuplicate = prev.some(m => 
+        m.content === message.content && 
+        m.type === message.type && 
+        Math.abs(m.timestamp.getTime() - message.timestamp.getTime()) < 1000
+      );
+      
+      if (isDuplicate) {
+        return prev;
+      }
+      
+      return [...prev, message];
+    });
+    
+    // Only clear loading state when bot responds, since user messages are added immediately
+    if (message.type === 'bot') {
+      setIsLoading(false);
+    }
   }, []);
 
   // Handle connection changes
@@ -58,12 +75,12 @@ export function ChatInterface({
     const unsubscribeMessage = chatService.onMessage(handleNewMessage);
     const unsubscribeConnection = chatService.onConnectionChange(handleConnectionChange);
 
-    if (autoConnect) {
+    if (autoConnect && !chatService.isConnected()) {
       chatService.connect().catch((error) => {
         console.error("Failed to connect:", error);
         toast({
           title: "Connection Failed",
-          description: "Failed to connect to chat server",
+          description: "Failed to connect to chat server. Auto-reconnection will be attempted.",
           variant: "destructive",
         });
       });
@@ -89,7 +106,9 @@ export function ChatInterface({
     setIsLoading(true);
     
     try {
+      // ChatService.sendMessage() already handles adding the user message to handlers
       await chatService.sendMessage(content);
+      // Loading state will be cleared when bot response is received via handleNewMessage
     } catch (error) {
       console.error("Failed to send message:", error);
       setIsLoading(false);
@@ -102,13 +121,18 @@ export function ChatInterface({
   };
 
   const handleConnect = async () => {
+    // Check if already connected or connecting to avoid duplicate attempts
+    if (chatService.isConnected() || chatService.getConnectionState() === 'connecting') {
+      return;
+    }
+
     try {
       await chatService.connect();
     } catch (error) {
       console.error("Failed to connect:", error);
       toast({
-        title: "Connection Failed",
-        description: "Failed to connect to chat server",
+        title: "Connection Failed", 
+        description: "Failed to connect to chat server. Auto-reconnection will be attempted.",
         variant: "destructive",
       });
     }
@@ -132,7 +156,9 @@ export function ChatInterface({
         placeholder={
           isConnected 
             ? "Type your message..." 
-            : "Connecting to chat server..."
+            : chatService.getConnectionState() === 'connecting'
+              ? "Connecting to chat server..."
+              : "Disconnected from chat server..."
         }
       />
       
@@ -141,13 +167,16 @@ export function ChatInterface({
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">
               Connection Status: {chatService.getConnectionState()}
+              {chatService.getConnectionState() === 'connecting' && " (Auto-reconnecting...)"}
             </span>
-            <button 
-              onClick={handleConnect}
-              className="text-sm text-primary hover:underline"
-            >
-              Retry Connection
-            </button>
+            {chatService.getConnectionState() !== 'connecting' && (
+              <button 
+                onClick={handleConnect}
+                className="text-sm text-primary hover:underline"
+              >
+                Retry Connection
+              </button>
+            )}
           </div>
         </div>
       )}

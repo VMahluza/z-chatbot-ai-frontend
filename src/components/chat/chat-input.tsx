@@ -49,7 +49,7 @@ export function ChatInput({
   const isDisabled = disabled || isLoading;
 
   return (
-    <div className={cn("border-t p-4 bg-background", className)}>
+    <div className={cn("border-t p-4 bg-background flex-shrink-0", className)}>
       <div className="flex gap-2">
         <div className="flex-1 relative">
           <input
