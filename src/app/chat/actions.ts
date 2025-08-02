@@ -17,7 +17,12 @@ export class ChatService {
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000; // 1 second, will increase exponentially
 
-  constructor(private wsUrl: string = 'ws://localhost:8000/ws/chat/') {}
+
+  // https://cruel-buckets-smile.loca.lt/
+
+  constructor(private wsUrl: string = 'wss://cruel-buckets-smile.loca.lt/ws/chat/') {}
+
+  
 
   connect(): Promise<void> {
     return new Promise((resolve, reject) => {
