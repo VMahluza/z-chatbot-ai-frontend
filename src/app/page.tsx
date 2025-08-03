@@ -6,7 +6,8 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <MainLayout>
+    <>
+ 
       {/* Hero Section */}
       <section className="relative py-12 md:py-24 lg:py-32 xl:py-48">
         <div className="container mx-auto px-4 md:px-6 max-w-6xl">
@@ -95,7 +96,7 @@ export default function Home() {
                 <Sparkles className="h-10 w-10 text-pink-600" />
                 <CardTitle>Customizable</CardTitle>
                 <CardDescription>
-                  Tailor the AI's personality and responses to match your specific needs and preferences.
+                  Tailor the AI personality and responses to match your specific needs and preferences.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -140,6 +141,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-    </MainLayout>
+      </>
+    
   );
 }

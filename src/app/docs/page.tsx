@@ -1,11 +1,11 @@
-import { MainLayout } from "@/components/main-layout";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Book, Code, MessageSquare, Settings } from "lucide-react";
 
 export default function DocsPage() {
   return (
-    <MainLayout>
+    
       <div className="container mx-auto py-8 px-4 md:px-6 max-w-6xl">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
@@ -71,7 +71,7 @@ export default function DocsPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Learn how to personalize your AI's behavior and responses.
+                  Learn how to personalize your AIs behavior and responses.
                 </p>
               </CardContent>
             </Card>
@@ -142,6 +142,6 @@ export default function DocsPage() {
           </div>
         </div>
       </div>
-    </MainLayout>
+    
   );
 }

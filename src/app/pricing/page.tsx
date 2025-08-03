@@ -48,7 +48,7 @@ export default function PricingPage() {
   ];
 
   return (
-    <MainLayout>
+    
       <div className="container mx-auto py-12 px-4 md:px-6 max-w-6xl">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">Simple, Transparent Pricing</h1>
@@ -121,6 +121,5 @@ export default function PricingPage() {
           </div>
         </div>
       </div>
-    </MainLayout>
   );
 }
