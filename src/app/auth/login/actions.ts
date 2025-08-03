@@ -2,9 +2,7 @@
 
 import { getApolloClient } from "@/lib/apollo/client";
 import { cookies } from "next/headers";
-import { gql } from "@apollo/client";
 import LOGIN_USER from "@/lib/graphql/mutations/auth/gql";
-import ME_QUERY from "@/lib/graphql/queries/gql";
 import { authenticatedUser } from "@/app/actions";
 
 // Query to get user data after login

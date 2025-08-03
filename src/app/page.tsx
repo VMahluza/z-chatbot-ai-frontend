@@ -1,6 +1,5 @@
-import { MainLayout } from "@/components/main-layout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bot, MessageSquare, Zap, Shield, BarChart3, Sparkles } from "lucide-react";
 import Link from "next/link";
 
