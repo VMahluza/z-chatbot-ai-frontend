@@ -6,40 +6,61 @@ import { MessageSquare, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ChatInputProps {
-  onSendMessage: (message: string) => void;
+  onSendMessage: (text: string) => Promise<void>;
   disabled?: boolean;
   placeholder?: string;
   className?: string;
+  value?: string;
+  onChangeValue?: (v: string) => void;
 }
 
 export function ChatInput({ 
   onSendMessage, 
-  disabled = false, 
-  placeholder = "Type your message...",
-  className 
+  disabled, 
+  placeholder, 
+  value, 
+  onChangeValue 
 }: ChatInputProps) {
-  const [message, setMessage] = useState("");
+  const [localValue, setLocalValue] = useState(value ?? "");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Keep localValue in sync if parent switches from undefined -> some value (rare)
+  // but do not overwrite when controlled every keystroke (we already use value directly)
+  // Optional:
+  // useEffect(() => { if (value !== undefined) setLocalValue(value); }, [value]);
+
+  const isControlled = value !== undefined;
+  const currentValue = isControlled ? value! : localValue;
+
   const handleSend = async () => {
-    if (!message.trim() || disabled || isLoading) return;
-    
-    const messageToSend = message.trim();
-    setMessage("");
+    if (!currentValue.trim() || disabled || isLoading) return;
+
+    const messageToSend = currentValue.trim();
+
+    // Optimistically clear
+    if (isControlled) {
+      onChangeValue?.("");
+    } else {
+      setLocalValue("");
+    }
+
     setIsLoading(true);
-    
     try {
       await onSendMessage(messageToSend);
     } catch (error) {
       console.error("Failed to send message:", error);
-      // Restore message on error
-      setMessage(messageToSend);
+      // Restore on error
+      if (isControlled) {
+        onChangeValue?.(messageToSend);
+      } else {
+        setLocalValue(messageToSend);
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -49,18 +70,30 @@ export function ChatInput({
   const isDisabled = disabled || isLoading;
 
   return (
-    <div className={cn("border-t p-4 bg-background flex-shrink-0", className)}>
+    <form
+      className={cn("border-t p-4 bg-background flex-shrink-0")}
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleSend();
+      }}
+    >
       <div className="flex gap-2">
         <div className="flex-1 relative">
-          <input
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
+          <textarea
+            id="chat-input"
+            value={currentValue}
+            onChange={(e) => {
+              if (isControlled) {
+                onChangeValue?.(e.target.value);
+              } else {
+                setLocalValue(e.target.value);
+              }
+            }}
+            onKeyDown={handleKeyDown}
             placeholder={placeholder}
             disabled={isDisabled}
             className={cn(
-              "w-full px-3 py-2 border rounded-md transition-colors",
+              "w-full px-3 py-2 border rounded-md transition-colors resize-none",
               "focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent",
               "disabled:opacity-50 disabled:cursor-not-allowed",
               isDisabled && "bg-muted"
@@ -68,8 +101,9 @@ export function ChatInput({
           />
         </div>
         <Button 
+          type="submit"
           onClick={handleSend}
-          disabled={isDisabled || !message.trim()}
+          disabled={isDisabled || !currentValue.trim()}
           size="icon"
           className="shrink-0"
         >
@@ -80,18 +114,18 @@ export function ChatInput({
           )}
         </Button>
       </div>
-      
+
       {!disabled && (
         <p className="text-xs text-muted-foreground mt-2">
           Press Enter to send, Shift+Enter for new line
         </p>
       )}
-      
+
       {disabled && (
         <p className="text-xs text-muted-foreground mt-2">
           Chat is currently unavailable. Please try again later.
         </p>
       )}
-    </div>
+    </form>
   );
 }

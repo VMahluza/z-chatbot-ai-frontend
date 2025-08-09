@@ -32,6 +32,7 @@ export function ChatInterface({
   const [connectionState, setConnectionState] = useState<WsConnectStatus>(WsConnectStatus.Closed);
   const [chatService] = useState(() => new ChatService(wsUrl));
   const [hasShownInitialConnection, setHasShownInitialConnection] = useState(false);
+  const [draft, setDraft] = useState("");
   const { toast } = useToast();
 
   // Handle new messages
@@ -170,6 +171,10 @@ export function ChatInterface({
     }
   };
 
+  const handleUseExample = (text: string) => {
+    setDraft(text); // just prefill; or call handleSendMessage(text) to send immediately
+  };
+
   return (
     <ChatContainer 
       title={title}
@@ -178,11 +183,11 @@ export function ChatInterface({
       height={height}
       status={connectionState}
     >
-      <ChatMessages 
+      <ChatMessages
         messages={messages}
         isLoading={isLoading}
+        onUseExample={handleUseExample}
       />
-      
       <ChatInput
         onSendMessage={handleSendMessage}
         disabled={!isConnected}
@@ -193,6 +198,8 @@ export function ChatInterface({
               ? "Connecting to chat server..."
               : "Disconnected from chat server..."
         }
+        value={draft}
+        onChangeValue={setDraft}
       />
       
       {!isConnected && (

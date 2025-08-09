@@ -36,9 +36,11 @@ export function ChatContainer({
           {description}
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col p-0 min-h-0">
-        {children}
-      </CardContent>
+      <div className="flex-1 flex justify-center overflow-hidden">
+        <CardContent className="flex flex-col p-0 px-2 sm:px-0 min-h-0 w-full max-w-[640px] flex-shrink-0">
+          {children}
+        </CardContent>
+      </div>
     </Card>
   );
 }
