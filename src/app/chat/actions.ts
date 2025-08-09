@@ -8,6 +8,10 @@ export interface ChatMessage {
 export interface ChatResponse {
   response?: string;
   error?: string;
+  type?: string;
+  messages?: Array<{ id: string; content: string; sender: string; timestamp: string }>;
+  kind?: 'user' | 'bot';
+  content?: string;
 }
 
 
@@ -98,7 +102,7 @@ export class ChatService {
           resolve();
         };
 
-        this.socket.onmessage = (event) => {
+  this.socket.onmessage = (event) => {
           try {
             const data: ChatResponse = JSON.parse(event.data);
             
@@ -107,13 +111,33 @@ export class ChatService {
               return;
             }
 
+            // Initial history batch
+            if (data.type === 'history' && data.messages) {
+              data.messages.forEach(m => {
+                this.notifyMessageHandlers({
+                  type: m.sender === 'bot' ? 'bot' : 'user',
+                  content: m.content,
+                  timestamp: new Date(m.timestamp),
+                });
+              });
+              return;
+            }
+            // Broadcast message event
+            if (data.type === 'message' && data.kind && data.content) {
+              this.notifyMessageHandlers({
+                type: data.kind,
+                content: data.content,
+                timestamp: new Date(),
+              });
+              return;
+            }
+            // Legacy single response shape
             if (data.response) {
-              const message: ChatMessage = {
+              this.notifyMessageHandlers({
                 type: 'bot',
                 content: data.response,
                 timestamp: new Date(),
-              };
-              this.notifyMessageHandlers(message);
+              });
             }
           } catch (error) {
             console.error('Failed to parse message:', error);

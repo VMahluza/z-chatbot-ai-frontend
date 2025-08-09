@@ -56,7 +56,6 @@ export function ChatMessages({ messages, isLoading, className, onUseExample }: C
   }, [messages.length]);
 
 
-  const welcomeMsgContent = isAuthenticated && user ? `🥹 Hello **${user.firstName || user.username}!** welcome to Z-Chatbot AI Assistant. I'm here to help you with your questions and tasks. Feel free to ask me anything!` : "🥹 Hello! welcome to Z-Chatbot AI Assistant. I'm here to help you with your questions and tasks. Feel free to ask me anything!";
 
   // Remove inline creation of a synthetic welcome ChatMessage to avoid hydration mismatch.
   // Display dedicated empty state instead.
