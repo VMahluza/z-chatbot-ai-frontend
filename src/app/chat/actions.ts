@@ -1,3 +1,4 @@
+
 export interface ChatMessage {
   type: 'user' | 'bot';
   content: string;
@@ -8,6 +9,25 @@ export interface ChatResponse {
   response?: string;
   error?: string;
 }
+
+
+// Helper to read JWT from localStorage or cookies
+function getAuthToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  // Prefer localStorage (explicitly stored on login)
+  const ls = localStorage.getItem('auth_token');
+  if (ls) return ls;
+  // Fallback to cookie named 'token' or 'auth_token'
+  const cookie = document.cookie || '';
+  if (!cookie) return null;
+  const parts = cookie.split(';').map(c => c.trim());
+  for (const p of parts) {
+    if (p.startsWith('token=')) return decodeURIComponent(p.substring(6));
+    if (p.startsWith('auth_token=')) return decodeURIComponent(p.substring(11));
+  }
+  return null;
+}
+
 
 export class ChatService {
   private socket: WebSocket | null = null;
@@ -27,6 +47,9 @@ export class ChatService {
   connect(): Promise<void> {
     return new Promise((resolve, reject) => {
       // If already connected, resolve immediately
+
+  
+
       if (this.socket && this.socket.readyState === WebSocket.OPEN) {
         resolve();
         return;
@@ -48,7 +71,17 @@ export class ChatService {
       }
 
       try {
-        this.socket = new WebSocket(this.wsUrl);
+        // Inject token from storage/cookies if present and not already in URL
+        let finalUrl = this.wsUrl;
+        const token = getAuthToken();
+        if (token) {
+          const hasQuery = finalUrl.includes('?');
+            // Avoid duplicating token param (simple contains check)
+          if (!finalUrl.includes('token=')) {
+            finalUrl += (hasQuery ? '&' : '?') + 'token=' + encodeURIComponent(token);
+          }
+        }
+        this.socket = new WebSocket(finalUrl);
 
         const connectionTimeout = setTimeout(() => {
           if (this.socket && this.socket.readyState !== WebSocket.OPEN) {

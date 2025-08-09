@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { WsConnectStatus } from "@/types/chat/wsConnectStatus";
 
 
+
+
 interface ChatInterfaceProps {
   title?: string;
   description?: string;
@@ -21,10 +23,11 @@ interface ChatInterfaceProps {
 export function ChatInterface({ 
   title,
   description,
-  wsUrl = process.env.GRAPHQL_BACKEND_URL || 'ws://localhost:8000/ws/chat/',
+  wsUrl,
   className,
   height,
-  autoConnect = true
+  autoConnect = true,
+
 }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isConnected, setIsConnected] = useState(false);
