@@ -2,6 +2,8 @@ import { ReactNode } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { WsConnectStatus } from "@/types/chat/wsConnectStatus";
+import { ChatStatus } from "@/components/chat/chat-status";
 
 interface ChatContainerProps {
   title?: string;
@@ -9,6 +11,7 @@ interface ChatContainerProps {
   children: ReactNode;
   className?: string;
   height?: string;
+  status: WsConnectStatus;
 }
 
 export function ChatContainer({ 
@@ -16,15 +19,19 @@ export function ChatContainer({
   description = "Your intelligent conversation partner",
   children,
   className,
-  height = "h-[600px]"
+  height = "h-[600px]",
+  status
 }: ChatContainerProps) {
   return (
     <Card className={cn("w-full flex flex-col overflow-hidden", height, className)}>
       <CardHeader className="border-b flex-shrink-0">
-        <CardTitle className="flex items-center gap-2">
-          <Bot className="h-5 w-5" />
-          {title}
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Bot className="h-5 w-5" />
+            {title}
+          </CardTitle>
+          <ChatStatus status={status} />
+        </div>
         <CardDescription>
           {description}
         </CardDescription>

@@ -6,6 +6,8 @@ import { ChatMessages } from "./chat-messages";
 import { ChatInput } from "./chat-input";
 import { ChatService, ChatMessage } from "@/app/chat/actions";
 import { useToast } from "@/hooks/use-toast";
+import { WsConnectStatus } from "@/types/chat/wsConnectStatus";
+
 
 interface ChatInterfaceProps {
   title?: string;
@@ -19,7 +21,7 @@ interface ChatInterfaceProps {
 export function ChatInterface({ 
   title,
   description,
-  wsUrl = 'ws://localhost:8000/ws/chat/',
+  wsUrl = process.env.GRAPHQL_BACKEND_URL || 'ws://localhost:8000/ws/chat/',
   className,
   height,
   autoConnect = true
@@ -27,6 +29,7 @@ export function ChatInterface({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [connectionState, setConnectionState] = useState<WsConnectStatus>(WsConnectStatus.Closed);
   const [chatService] = useState(() => new ChatService(wsUrl));
   const [hasShownInitialConnection, setHasShownInitialConnection] = useState(false);
   const { toast } = useToast();
@@ -62,6 +65,7 @@ export function ChatInterface({
       setHasShownInitialConnection(true);
       // Only show success toast after the initial connection or reconnection
       if (hasShownInitialConnection) {
+        setConnectionState(WsConnectStatus.Open);
         toast({
           title: "Reconnected",
           description: "Successfully reconnected to chat server",
@@ -70,6 +74,7 @@ export function ChatInterface({
     } else {
       // Only show disconnection toast if we were previously connected
       if (hasShownInitialConnection) {
+        setConnectionState(WsConnectStatus.Closed);
         toast({
           title: "Disconnected",
           description: "Lost connection to chat server. Attempting to reconnect...",
@@ -146,7 +151,9 @@ export function ChatInterface({
 
   const handleConnect = async () => {
     // Check if already connected or connecting to avoid duplicate attempts
+
     if (chatService.isConnected() || chatService.getConnectionState() === 'connecting') {
+       setConnectionState(WsConnectStatus.Connecting);
       return;
     }
 
@@ -154,6 +161,7 @@ export function ChatInterface({
       await chatService.connect();
     } catch (error) {
       console.error("Failed to connect:", error);
+      setConnectionState(WsConnectStatus.Error);
       toast({
         title: "Connection Failed", 
         description: "Failed to connect to chat server. Auto-reconnection will be attempted.",
@@ -168,6 +176,7 @@ export function ChatInterface({
       description={description}
       className={className}
       height={height}
+      status={connectionState}
     >
       <ChatMessages 
         messages={messages}

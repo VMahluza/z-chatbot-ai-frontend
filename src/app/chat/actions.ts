@@ -20,7 +20,7 @@ export class ChatService {
 
   // https://cruel-buckets-smile.loca.lt/
 
-  constructor(private wsUrl: string = 'wss://cruel-buckets-smile.loca.lt/ws/chat/') {}
+  constructor(private wsUrl: string = process.env.WS_BACKEND_URL || '') {}
 
   
 
