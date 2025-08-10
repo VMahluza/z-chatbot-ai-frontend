@@ -14,6 +14,14 @@ export interface ChatResponse {
   content?: string;
 }
 
+interface HistoryMessage {
+  id: string;
+  content: string;
+  sender: string;
+  timestamp: string;
+  kind?: 'user' | 'bot';
+}
+
 
 // Helper to read JWT from localStorage or cookies
 function getAuthToken(): string | null {
@@ -42,17 +50,14 @@ export class ChatService {
   private reconnectDelay = 1000; // 1 second, will increase exponentially
 
 
-  // https://cruel-buckets-smile.loca.lt/
+  constructor(private wsUrl: string = process.env.WS_BACKEND_URL || '') { }
 
-  constructor(private wsUrl: string = process.env.WS_BACKEND_URL || '') {}
 
-  
 
   connect(): Promise<void> {
     return new Promise((resolve, reject) => {
-      // If already connected, resolve immediately
+      
 
-  
 
       if (this.socket && this.socket.readyState === WebSocket.OPEN) {
         resolve();
@@ -80,7 +85,7 @@ export class ChatService {
         const token = getAuthToken();
         if (token) {
           const hasQuery = finalUrl.includes('?');
-            // Avoid duplicating token param (simple contains check)
+          // Avoid duplicating token param (simple contains check)
           if (!finalUrl.includes('token=')) {
             finalUrl += (hasQuery ? '&' : '?') + 'token=' + encodeURIComponent(token);
           }
@@ -102,20 +107,24 @@ export class ChatService {
           resolve();
         };
 
-  this.socket.onmessage = (event) => {
+        this.socket.onmessage = (event) => {
           try {
             const data: ChatResponse = JSON.parse(event.data);
-            
+
             if (data.error) {
               console.error('Server error:', data.error);
               return;
             }
 
             // Initial history batch
+
+            console.log('Received message:', data);
+
             if (data.type === 'history' && data.messages) {
-              data.messages.forEach(m => {
+              (data.messages as HistoryMessage[]).forEach(m => {
+                const type: 'user' | 'bot' = m.kind ? m.kind : (m.sender === 'bot' ? 'bot' : 'user');
                 this.notifyMessageHandlers({
-                  type: m.sender === 'bot' ? 'bot' : 'user',
+                  type,
                   content: m.content,
                   timestamp: new Date(m.timestamp),
                 });
@@ -148,7 +157,7 @@ export class ChatService {
           clearTimeout(connectionTimeout);
           console.log('WebSocket disconnected:', event.code, event.reason);
           this.notifyConnectionHandlers(false);
-          
+
           // Attempt to reconnect if not a clean close
           if (event.code !== 1000 && this.reconnectAttempts < this.maxReconnectAttempts) {
             this.attemptReconnect();
@@ -170,9 +179,9 @@ export class ChatService {
   private async attemptReconnect(): Promise<void> {
     this.reconnectAttempts++;
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1); // Exponential backoff
-    
+
     console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${delay}ms...`);
-    
+
     setTimeout(async () => {
       try {
         await this.connect();
@@ -206,7 +215,7 @@ export class ChatService {
 
       try {
         this.socket.send(JSON.stringify({ message: content.trim() }));
-        
+
         // Add the user message to the message handlers
         const userMessage: ChatMessage = {
           type: 'user',
@@ -214,7 +223,7 @@ export class ChatService {
           timestamp: new Date(),
         };
         this.notifyMessageHandlers(userMessage);
-        
+
         resolve();
       } catch (error) {
         reject(error);
@@ -224,7 +233,7 @@ export class ChatService {
 
   onMessage(handler: (message: ChatMessage) => void): () => void {
     this.messageHandlers.push(handler);
-    
+
     // Return unsubscribe function
     return () => {
       const index = this.messageHandlers.indexOf(handler);
@@ -236,7 +245,7 @@ export class ChatService {
 
   onConnectionChange(handler: (connected: boolean) => void): () => void {
     this.connectionHandlers.push(handler);
-    
+
     // Return unsubscribe function
     return () => {
       const index = this.connectionHandlers.indexOf(handler);
@@ -272,7 +281,7 @@ export class ChatService {
 
   getConnectionState(): string {
     if (!this.socket) return 'disconnected';
-    
+
     switch (this.socket.readyState) {
       case WebSocket.CONNECTING: return 'connecting';
       case WebSocket.OPEN: return 'connected';
